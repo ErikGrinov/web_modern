@@ -1,0 +1,89 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Firm {
+  EDRPOU        String       @id @unique @db.VarChar(8)
+  Firm_Name     String?      @db.VarChar(55)
+  Adress        String?      @db.VarChar(255)
+  Firm_Password String?      @db.VarChar(255)
+  Firm_email    String?      @db.VarChar(55)
+  Firm_Phone    String?      @db.Char(13)
+  StaffLists    Staff_list[] @relation("FirmToStaffList")
+}
+
+model Staff_list {
+  ID_position   String              @id @default(uuid()) @db.VarChar(255)
+  EDRPOU        String
+  Name_position String?             @db.VarChar(55)
+  Amount        Int?
+  Firm          Firm                @relation("FirmToStaffList", fields: [EDRPOU], references: [EDRPOU])
+  Directions    Direction_position[]
+}
+
+
+model Direction {
+  ID_direction   String                @id @unique @db.VarChar(255)
+  Name_direction String?               @db.VarChar(122)
+  Positions      Direction_position[]
+  Scientists     Direction_scientist[]
+}
+
+model Direction_position {
+  ID_position  String
+  EDRPOU       String
+  ID_direction String
+  StaffList    Staff_list  @relation(fields: [ID_position], references: [ID_position])
+  Direction    Direction   @relation(fields: [ID_direction], references: [ID_direction])
+  @@id([ID_position, EDRPOU, ID_direction])
+}
+
+model scientific_degree {
+  ID_degree   String        @id @unique @db.VarChar(22)
+  Name_degree String?       @db.VarChar(55)
+  Scientists  scientist[]
+}
+
+model academic_status {
+  ID_status   String        @id @unique @db.VarChar(5)
+  Name_status String?       @db.VarChar(55)
+  Scientists  scientist[]
+}
+
+model scientist {
+  scientist_email String               @id @unique @db.VarChar(55)
+  ID_status       String?
+  ID_degree       String?
+  First_name      String?               @db.VarChar(55)
+  Middle_name     String?               @db.VarChar(55)
+  Second_name     String?               @db.VarChar(55)
+  Date_birth      DateTime?
+  scientist_phone String?               @db.VarChar(22)
+  scientist_password String?            @db.VarChar(255)
+  Status          academic_status?      @relation(fields: [ID_status], references: [ID_status])
+  Degree          scientific_degree?    @relation(fields: [ID_degree], references: [ID_degree])
+  Directions      Direction_scientist[]
+  Resumes         Resume?
+}
+
+model Direction_scientist {
+  scientist_email String
+  ID_direction    String
+  Scientist       scientist  @relation(fields: [scientist_email], references: [scientist_email])
+  Direction       Direction   @relation(fields: [ID_direction], references: [ID_direction])
+  @@id([scientist_email, ID_direction])
+}
+
+model Resume {
+  scientist_email  String    @id @unique @db.VarChar(55)
+  Data_creation    DateTime  @db.Timestamptz
+  template_resume  String?
+  isDeleted        Boolean   @default(false)  // Додане поле для відмітки про видалення
+  Scientist        scientist @relation(fields: [scientist_email], references: [scientist_email])
+}
+
